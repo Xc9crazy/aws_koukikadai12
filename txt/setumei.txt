@@ -1,0 +1,355 @@
+PHPコード詳細説明書
+1行1行のコードを丁寧に解説
+この説明書について
+この説明書では、PHPのコードを1行ずつ詳しく説明します。「このコードは何をしているのか」「なぜこう書くのか」を、小学生でもわかるように説明します。
+読み方：各ページで、まずコードが表示され、その下に詳しい説明があります。コードと説明を見比べながら読んでください。
+ログイン画面のコード詳細
+ファイル名: login.php
+コード 1:
+session_start();
+説明: セッションを開始します。セッションとは、ウェブサイトが「今この人は誰か」を記憶する仕組みです。これがないと、ページを移動するたびにログインし直す必要があります。
+コード 2:
+$dbh = new PDO('mysql:host=mysql;dbname=example_db', 'root', '');
+説明: データベースに接続します。データベースは会員情報が保存されている場所です。例えば図書館に行くときに、受付で「本を探しに来ました」と伝えるようなものです。
+コード 3:
+if (!empty($_POST['email']) && !empty($_POST['password'])) {
+説明: メールアドレスとパスワードが入力されているかチェックします。両方入力されていたら、ログイン処理を始めます。空っぽだったら何もしません。
+コード 4:
+$select_sth = $dbh->prepare("SELECT * FROM users WHERE email = :email ORDER BY id DESC LIMIT 1");
+説明: データベースに「このメールアドレスの人の情報をください」とお願いする準備をします。SELECT は「選んで」、WHERE は「条件」という意味です。
+コード 5:
+$select_sth->execute([':email' => $_POST['email']]);
+説明: 実際にデータベースに問い合わせます。ユーザーが入力したメールアドレスを使って検索します。
+コード 6:
+$user = $select_sth->fetch();
+説明: データベースから返ってきた会員情報を$userという変数に入れます。変数は「箱」のようなもので、データを入れておく場所です。
+コード 7:
+if (empty($user)) {
+説明: 会員情報が見つからなかった場合、つまり「そのメールアドレスの人はいません」という状態をチェックします。
+コード 8:
+header("Location: ./login.php?error=1");
+説明: エラー画面に移動します。?error=1 は「エラーが起きたよ」という印です。この印を見て、エラーメッセージを表示します。
+コード 9:
+$correct_password = password_verify($_POST['password'], $user['password']);
+説明: パスワードが正しいかチェックします。入力されたパスワードと、データベースに保存されているパスワードを比べます。パスワードは暗号化されているので、特別な方法で比べる必要があります。
+コード 10:
+$_SESSION["login_user_id"] = $user['id'];
+説明: ログイン成功！この人のIDをセッションに記憶します。これで、他のページに移動しても「この人は誰か」がわかります。会員カードを持っているようなものです。
+コード 11:
+<form method="POST">
+説明: フォームを作ります。method="POST"は「このフォームのデータをPOST方式で送る」という意味です。POST方式は、パスワードなど大事な情報を送るときに使います。
+コード 12:
+<input type="email" name="email">
+説明: メールアドレスを入力する欄を作ります。type="email"にすると、メールアドレスの形式かどうかチェックしてくれます。name="email"は、この欄のデータに「email」という名前をつけることです。
+コード 13:
+<input type="password" name="password" minlength="6">
+説明: パスワードを入力する欄を作ります。type="password"にすると、入力した文字が●●●で隠れます。minlength="6"は「最低6文字必要」という意味です。
+コード 14:
+<?= htmlspecialchars($variable) ?>
+説明: 変数の内容を安全に表示します。htmlspecialcharsは、悪意のあるコードが実行されないように、特殊な文字を無害な文字に変えます。これをしないと、ハッカーに攻撃される可能性があります。
+
+
+会員登録画面のコード詳細
+ファイル名: signup.php
+コード 1:
+if (!empty($_POST['name']) && !empty($_POST['email']) && !empty($_POST['password'])) {
+説明: 名前、メールアドレス、パスワードの3つ全てが入力されているかチェックします。1つでも空っぽだったら登録処理はしません。
+コード 2:
+$select_sth = $dbh->prepare("SELECT * FROM users WHERE email = :email ORDER BY id DESC LIMIT 1");
+説明: 同じメールアドレスの人が既にいないか調べます。1つのメールアドレスは1人しか使えないので、重複チェックが必要です。
+コード 3:
+if (!empty($user)) {
+説明: もし会員が見つかったら、つまり「既にそのメールアドレスは使われている」という状態をチェックします。
+コード 4:
+header("Location: ./signup.php?duplicate_email=1");
+説明: 「そのメールアドレスは既に使われています」というエラー画面に移動します。duplicate_emailは「重複したメールアドレス」という意味です。
+コード 5:
+$insert_sth = $dbh->prepare("INSERT INTO users (name, email, password) VALUES (:name, :email, :password)");
+説明: 新しい会員をデータベースに登録する準備をします。INSERT INTOは「追加する」という意味です。usersテーブルに、名前、メールアドレス、パスワードを追加します。
+コード 6:
+password_hash($_POST['password'], PASSWORD_DEFAULT)
+説明: パスワードを暗号化します。パスワードをそのまま保存すると危険なので、暗号に変えて保存します。例えば「abc123」は「$2y$10$...」のような長い暗号になります。
+コード 7:
+$insert_sth->execute([':name' => $_POST['name'], ':email' => $_POST['email'], ':password' => password_hash($_POST['password'], PASSWORD_DEFAULT)]);
+説明: 実際にデータベースに新しい会員を登録します。ユーザーが入力した名前、メールアドレス、暗号化されたパスワードを保存します。
+コード 8:
+header("Location: ./signup_finish.php");
+説明: 登録が完了したら、完了画面に移動します。「登録が完了しました」というメッセージが表示されます。
+
+
+タイムライン画面のコード詳細
+ファイル名: timeline.php
+コード 1:
+if (empty($_SESSION['login_user_id'])) {
+説明: ログインしているかチェックします。セッションにログインIDが保存されていなければ、ログインしていない状態です。
+コード 2:
+header("Location: /login.php");
+説明: ログインしていない人は、タイムラインを見ることができません。ログイン画面に移動させます。
+コード 3:
+$user_select_sth = $dbh->prepare("SELECT * from users WHERE id = :id");
+説明: 今ログインしている人の情報を取得する準備をします。IDで会員を探します。
+コード 4:
+$user_select_sth->execute([':id' => $_SESSION['login_user_id']]);
+説明: セッションに保存されているログインIDを使って、その人の情報をデータベースから取得します。
+コード 5:
+if (isset($_POST['body']) && !empty($_SESSION['login_user_id'])) {
+説明: 投稿内容が入力されていて、かつログインしている場合に、投稿処理を行います。
+コード 6:
+$image_filename = null;
+説明: 画像ファイル名を入れる変数を作ります。最初はnull（空っぽ）にしておきます。画像がアップロードされたら、ここにファイル名が入ります。
+コード 7:
+$base64 = preg_replace('/^data:.+base64,/', '', $_POST['image_base64']);
+説明: 画像データの最初の部分（data:image/png;base64,のような部分）を削除します。preg_replaceは文字を置き換える命令です。
+コード 8:
+$image_binary = base64_decode($base64);
+説明: base64形式（文字で表された画像）を、普通の画像データに変換します。テキストを画像に戻すイメージです。
+コード 9:
+$image_filename = strval(time()) . bin2hex(random_bytes(25)) . '.png';
+説明: 画像に新しいファイル名をつけます。現在時刻とランダムな文字を組み合わせて、他のファイルと絶対に被らない名前を作ります。例：1234567890abcdef1234567890.png
+コード 10:
+file_put_contents($filepath, $image_binary);
+説明: 画像ファイルを保存します。file_put_contentsは「ファイルに内容を書き込む」という命令です。
+コード 11:
+$insert_sth = $dbh->prepare("INSERT INTO bbs_entries (user_id, body, image_filename) VALUES (:user_id, :body, :image_filename)");
+説明: 投稿をデータベースに保存する準備をします。bbs_entriesテーブルに、誰が、何を、どの画像で投稿したかを保存します。
+コード 12:
+header("Location: ./timeline.php");
+説明: 投稿が完了したら、タイムライン画面を再表示します。これをしないと、ページを更新したときに同じ投稿が二重に保存されてしまいます。
+コード 13:
+<textarea name="body" required></textarea>
+説明: 複数行の文章を入力できる欄を作ります。requiredは「必須」という意味で、空っぽのまま送信できません。
+コード 14:
+<input type="file" accept="image/*" name="image" id="imageInput">
+説明: 画像ファイルを選ぶボタンを作ります。accept="image/*"は「画像ファイルだけ選べる」という意味です。
+コード 15:
+<input id="imageBase64Input" type="hidden" name="image_base64">
+説明: 画像データを送るための隠し項目を作ります。type="hidden"は「ユーザーには見えない」という意味です。JavaScriptがここにbase64データを入れます。
+コード 16:
+const request = new XMLHttpRequest();
+説明: JavaScriptで、サーバーからデータを取得する準備をします。XMLHttpRequestは、ページを再読み込みせずにデータを取得する仕組みです。
+コード 17:
+request.open('GET', '/timeline_json.php', true);
+説明: timeline_json.phpにアクセスして、投稿データを取得します。GETは「データをください」という意味です。
+コード 18:
+request.responseType = 'json';
+説明: 返ってくるデータの形式はJSON（ジェイソン）です。JSONは、データを整理して送るための形式です。
+コード 19:
+response.entries.forEach((entry) => {
+説明: 取得した投稿を1つずつ処理します。forEachは「それぞれに対して」という意味で、繰り返し処理をします。
+コード 20:
+const entryCopied = entryTemplate.cloneNode(true);
+説明: 投稿のテンプレート（見本）をコピーします。cloneNodeは「複製する」という意味です。この複製に実際のデータを入れていきます。
+コード 21:
+entryCopied.querySelector('[data-role="entryIdArea"]').innerText = entry.id.toString();
+説明: 投稿番号を表示する場所を探して、そこに投稿のIDを入れます。querySelectorは「探す」、innerTextは「中の文字」という意味です。
+コード 22:
+const reader = new FileReader();
+説明: ファイルを読み込むための道具を用意します。FileReaderは、選択された画像ファイルを読み込むために使います。
+コード 23:
+reader.readAsDataURL(file);
+説明: 画像ファイルをbase64形式（テキスト）に変換して読み込みます。これで画像をPHPに送れるようになります。
+コード 24:
+const canvas = document.getElementById("imageCanvas");
+説明: 画像を編集するための作業スペース（キャンバス）を取得します。ここで画像を小さくします。
+コード 25:
+canvas.width = maxLength;
+説明: キャンバスの幅を設定します。画像が大きすぎる場合は、maxLength（最大1000ピクセル）に縮小します。
+コード 26:
+context.drawImage(image, 0, 0, canvas.width, canvas.height);
+説明: キャンバスに画像を描きます。この時に画像のサイズが変わるので、大きな画像が小さくなります。
+コード 27:
+imageBase64Input.value = canvas.toDataURL();
+説明: 小さくした画像をbase64形式に変換して、隠しフォームに入れます。これでPHPに送信できます。
+
+
+会員一覧画面のコード詳細
+ファイル名: users.php
+コード 1:
+$sql = 'SELECT * FROM users';
+説明: データベースから全ての会員情報を取得するSQL文を作ります。SELECT * は「全ての情報」、FROM usersは「usersテーブルから」という意味です。
+コード 2:
+$where_sql_array = [];
+説明: 検索条件を入れる配列（複数のデータを入れる箱）を用意します。最初は空っぽです。
+コード 3:
+if (!empty($_GET['name'])) {
+説明: 名前で検索が入力されているかチェックします。$_GETはURLから送られてきたデータです。
+コード 4:
+$where_sql_array[] = ' name LIKE :name';
+説明: 「名前に○○が含まれる」という条件を追加します。LIKEは「似ている」という意味で、部分一致検索ができます。
+コード 5:
+$prepare_params[':name'] = '%' . $_GET['name'] . '%';
+説明: 検索する名前を設定します。%は「何でもいい」という意味で、前後に%をつけると部分一致になります。例：%田中%は「田中」を含む全ての名前にマッチします。
+コード 6:
+if (!empty($_GET['year_from'])) {
+説明: 生まれ年（開始）が入力されているかチェックします。
+コード 7:
+$where_sql_array[] = ' birthday >= :year_from';
+説明: 「○○年以降に生まれた」という条件を追加します。>=は「以上」という意味です。
+コード 8:
+$prepare_params[':year_from'] = $_GET['year_from'] . '-01-01';
+説明: 開始年の1月1日を設定します。例：2000年以降なら「2000-01-01」になります。
+コード 9:
+if (!empty($where_sql_array)) {
+説明: 検索条件が1つでもあるかチェックします。条件があれば、SQL文に追加します。
+コード 10:
+$sql .= ' WHERE ' . implode(' AND ', $where_sql_array);
+説明: 検索条件をSQL文に追加します。implodeは配列を文字列に変換する命令で、ANDで条件を繋ぎます。
+コード 11:
+$sql .= ' ORDER BY id DESC';
+説明: 会員を新しい順に並べます。ORDER BYは「並び替え」、DESCは「降順（大きい方から小さい方へ）」という意味です。
+コード 12:
+$followee_user_ids = [];
+説明: フォローしている人のIDを入れる配列を用意します。最初は空っぽです。
+コード 13:
+$followee_users_select_sth = $dbh->prepare('SELECT * FROM user_relationships WHERE follower_user_id = :follower_user_id');
+説明: 自分がフォローしている人を全て取得する準備をします。user_relationshipsテーブルにフォロー関係が保存されています。
+コード 14:
+$followee_user_ids = array_map(function ($relationship) { return $relationship['followee_user_id']; }, $followee_users_select_sth->fetchAll());
+説明: フォロー関係のデータから、フォローしている人のIDだけを取り出します。array_mapは配列の各要素に処理を適用する命令です。
+コード 15:
+<?php foreach($select_sth as $user): ?>
+説明: 全ての会員に対して繰り返し処理をします。foreachは「それぞれに対して」という意味です。
+コード 16:
+<?php if(empty($user['icon_filename'])): ?>
+説明: アイコン画像があるかチェックします。なければ空白を表示して、レイアウトを整えます。
+コード 17:
+<?php if($user['id'] === $_SESSION['login_user_id']): ?>
+説明: この会員が自分自身かチェックします。===は「完全に同じ」という意味です。
+コード 18:
+<?php elseif(in_array($user['id'], $followee_user_ids)): ?>
+説明: この会員を既にフォローしているかチェックします。in_arrayは「配列の中にあるか」を調べる命令です。
+
+
+プロフィール画面のコード詳細
+ファイル名: profile.php
+コード 1:
+if (!empty($_GET['user_id'])) {
+説明: URLから会員IDが送られてきているかチェックします。プロフィールページは、どの会員のページかをURLで指定します。
+コード 2:
+$user_id = $_GET['user_id'];
+説明: URLから取得した会員IDを変数に入れます。この IDを使って会員情報を探します。
+コード 3:
+if (empty($user)) {
+説明: 会員が見つからなかった場合、つまり「そのIDの人は存在しない」という状態をチェックします。
+コード 4:
+header("HTTP/1.1 404 Not Found");
+説明: 404エラーを返します。404は「ページが見つかりません」という意味のエラーコードです。
+コード 5:
+$select_sth = $dbh->prepare('SELECT bbs_entries.*, users.name AS user_name, users.icon_filename AS user_icon_filename FROM bbs_entries INNER JOIN users ON bbs_entries.user_id = users.id WHERE user_id = :user_id ORDER BY bbs_entries.created_at DESC');
+説明: この会員の投稿を全て取得します。INNER JOINは「2つのテーブルを組み合わせる」という意味で、投稿テーブルと会員テーブルを繋げて、投稿と一緒に会員情報も取得します。
+コード 6:
+session_start();
+説明: セッションを開始して、ログイン状態を確認できるようにします。
+コード 7:
+$relationship = null;
+説明: フォロー関係を入れる変数を用意します。最初はnull（空っぽ）にしておきます。
+コード 8:
+if (!empty($_SESSION['login_user_id'])) {
+説明: ログインしているかチェックします。ログインしていない場合は、フォロー状態を表示しません。
+コード 9:
+$select_sth = $dbh->prepare("SELECT * FROM user_relationships WHERE follower_user_id = :follower_user_id AND followee_user_id = :followee_user_id");
+説明: 自分がこの人をフォローしているかデータベースで確認します。follower_user_idは「フォローする人」、followee_user_idは「フォローされる人」です。
+コード 10:
+$relationship = $select_sth->fetch();
+説明: フォロー関係のデータを取得します。データがあれば「フォロー中」、なければ「フォローしていない」です。
+コード 11:
+$follower_relationship = null;
+説明: フォローされている関係を入れる変数を用意します。
+コード 12:
+<?php if(!empty($user['cover_filename'])): ?>
+説明: カバー画像があるかチェックします。あれば背景に表示します。
+コード 13:
+background: url('/image/<?= $user['cover_filename'] ?>') center;
+説明: カバー画像を背景に設定します。centerは「中央に配置」という意味です。
+コード 14:
+<?php if($user['id'] === $_SESSION['login_user_id']): ?>
+説明: このプロフィールが自分自身のものかチェックします。自分の場合は「これはあなたです」と表示します。
+コード 15:
+<?php if(empty($relationship)): ?>
+説明: フォローしていない場合をチェックします。フォローしていなければ「フォローする」ボタンを表示します。
+コード 16:
+<?php if(!empty($follower_relationship)): ?>
+説明: この人が自分をフォローしているかチェックします。フォローされていれば「フォローされています」と表示します。
+コード 17:
+$birthday = DateTime::createFromFormat('Y-m-d', $user['birthday']);
+説明: 生年月日のデータを日付オブジェクトに変換します。これで年齢を計算できます。
+コード 18:
+$today = new DateTime('now');
+説明: 今日の日付を取得します。nowは「今」という意味です。
+コード 19:
+<?= $today->diff($birthday)->y ?>歳
+説明: 今日の日付と生年月日の差を計算して、年齢を表示します。diffは「差」、yは「年」という意味です。
+コード 20:
+<?= nl2br(htmlspecialchars($user['introduction'] ?? '')) ?>
+説明: 自己紹介文を安全に表示します。nl2brは改行を<br>タグに変換する命令で、??は「値がなければ空文字」という意味です。
+
+
+フォロー機能のコード詳細
+ファイル名: follow.php
+コード 1:
+if (empty($_SESSION['login_user_id'])) {
+説明: ログインしているかチェックします。ログインしていない人はフォローできません。
+コード 2:
+$followee_user = null;
+説明: フォローする相手の情報を入れる変数を用意します。最初は空っぽです。
+コード 3:
+if (!empty($_GET['followee_user_id'])) {
+説明: URLからフォローする相手のIDが送られてきているかチェックします。
+コード 4:
+$select_sth = $dbh->prepare("SELECT * FROM users WHERE id = :id");
+説明: フォローする相手の会員情報を取得する準備をします。
+コード 5:
+if (empty($followee_user)) {
+説明: フォローする相手が見つからなかった場合をチェックします。
+コード 6:
+$select_sth = $dbh->prepare("SELECT * FROM user_relationships WHERE follower_user_id = :follower_user_id AND followee_user_id = :followee_user_id");
+説明: 既にフォローしているかチェックします。同じ人を二重にフォローできないようにします。
+コード 7:
+$relationship = $select_sth->fetch();
+説明: フォロー関係のデータを取得します。データがあれば「既にフォロー中」です。
+コード 8:
+if (!empty($relationship)) {
+説明: 既にフォローしている場合をチェックします。フォロー済みなら処理を中断します。
+コード 9:
+$insert_result = false;
+説明: フォロー登録の結果を入れる変数を用意します。最初はfalse（失敗）にしておきます。
+コード 10:
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+説明: フォームが送信されたかチェックします。REQUEST_METHODは「送信方法」という意味で、POSTはフォーム送信の方法の1つです。
+コード 11:
+$insert_sth = $dbh->prepare("INSERT INTO user_relationships (follower_user_id, followee_user_id) VALUES (:follower_user_id, :followee_user_id)");
+説明: フォロー関係をデータベースに登録する準備をします。follower_user_idは「フォローする人」、followee_user_idは「フォローされる人」です。
+コード 12:
+$insert_result = $insert_sth->execute([':followee_user_id' => $followee_user['id'], ':follower_user_id' => $_SESSION['login_user_id']]);
+説明: 実際にフォロー関係をデータベースに登録します。成功したらtrueが返ってきます。
+コード 13:
+<?php if($insert_result): ?>
+説明: フォロー登録が成功したかチェックします。成功していれば完了メッセージを表示します。
+
+
+生年月日設定のコード詳細
+ファイル名: setting/birthday.php
+コード 1:
+if (empty($_SESSION['login_user_id'])) {
+説明: ログインしているかチェックします。ログインしていない人は設定を変更できません。
+コード 2:
+if (isset($_POST['birthday'])) {
+説明: フォームから生年月日が送信されたかチェックします。issetは「設定されているか」という意味です。
+コード 3:
+$update_sth = $dbh->prepare("UPDATE users SET birthday = :birthday WHERE id = :id");
+説明: データベースの生年月日を更新する準備をします。UPDATEは「更新する」、SETは「設定する」という意味です。
+コード 4:
+$update_sth->execute([':id' => $user['id'], ':birthday' => $_POST['birthday']]);
+説明: 実際にデータベースの生年月日を更新します。ログイン中の人のデータだけを更新します。
+コード 5:
+header("Location: ./birthday.php?success=1");
+説明: 更新が完了したら、成功メッセージ付きで画面を再表示します。?success=1は「成功したよ」という印です。
+コード 6:
+<input type="date" name="birthday" value="<?= htmlspecialchars($user['birthday']) ?>">
+説明: 日付を選択する欄を作ります。type="date"にすると、カレンダーが表示されて日付を選びやすくなります。valueは「初期値」で、現在の生年月日が最初から入っています。
+コード 7:
+<?php if(!empty($_GET['success'])): ?>
+説明: URLに?success=1がついているかチェックします。ついていれば成功メッセージを表示します。
+
+以上
+※自分が理解するために作成したものです
