@@ -81,7 +81,7 @@ http://パブリックアドレス/
 ポートが使用中の場合
 compose.ymlのポート番号を変更する。
 
-yamlservices:
+services:
   web:
     ports:
       - 8080:80  # 80を8080に変更
@@ -92,13 +92,13 @@ yamlservices:
 
 コンテナが正常に起動しているか確認する。
 
-bashdocker compose ps
+docker compose ps
 
 全てのコンテナが "running" になっていることを確認する。
 
 ログの確認
 
-bashdocker compose logs web
+docker compose logs web
 
 docker compose logs php
 
@@ -116,7 +116,7 @@ style.css は public/style.css に配置されており、全ページで読み�
 
 データベースをリセットする場合は、以下のコマンドを実行する。
 
-bashdocker compose down -v
+docker compose down -v
 
 docker compose up -d
 
