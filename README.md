@@ -72,11 +72,9 @@ http://パブリックアドレス/
 
 停止と再起動
 
-停止
-bashdocker compose down
+停止:bashdocker compose down
 
-再起動
-bashdocker compose up -d
+再起動:bashdocker compose up -d
 
 トラブルシューティング
 
