@@ -22,7 +22,7 @@ aws_kadai12/
 
 プロジェクトのルートディレクトリで以下のコマンドを実行する。
 
-bashdocker compose up -d
+docker compose up -d
 
 初回起動時はイメージのビルドに時間がかかる場合がある。
 
@@ -30,11 +30,11 @@ bashdocker compose up -d
 
 MySQLコンテナに接続してテーブルを作成する。
 
-bashdocker compose exec mysql mysql -u root example_db
+docker compose exec mysql mysql -u root example_db
 
 MySQLプロンプトで以下のSQLファイルを順番に実行する。
 
-sqlsource /var/lib/mysql/create_users.sql;
+source /var/lib/mysql/create_users.sql;
 
 source /var/lib/mysql/create_bbs_entries.sql;
 
@@ -44,7 +44,7 @@ source /var/lib/mysql/create_access_logs.sql;
 
 または、コンテナ外から直接実行する。
 
-bashdocker compose exec mysql mysql -u root example_db < create_users.sql
+docker compose exec mysql mysql -u root example_db < create_users.sql
 
 docker compose exec mysql mysql -u root example_db < create_bbs_entries.sql
 
@@ -72,9 +72,9 @@ http://パブリックアドレス/
 
 停止と再起動
 
-停止:bashdocker compose down
+停止:docker compose down
 
-再起動:bashdocker compose up -d
+再起動:docker compose up -d
 
 トラブルシューティング
 
